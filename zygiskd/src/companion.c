@@ -42,11 +42,7 @@ void *entry_thread(void *arg) {
   int fd = args->fd;
   zygisk_companion_entry_func module_entry = args->entry;
 
-  LOGI("New companion thread (inside the thread!).\n - Client fd: %d\n", fd);
-
   module_entry(fd);
-
-  LOGI("Companion thread has been terminated.\n");
 
   close(fd);
   free(args);
@@ -63,7 +59,8 @@ void entry(int fd) {
   if (ret == -1) {
     LOGE("Failed to read module name\n");
 
-    write_uint8_t(fd, 2);
+    ret = write_uint8_t(fd, 2);
+    ASSURE_SIZE_WRITE("ZygiskdCompanion", "name", ret, sizeof(uint8_t));
 
     exit(0);
   }
@@ -74,7 +71,8 @@ void entry(int fd) {
   if (library_fd == -1) {
     LOGE("Failed to receive library fd\n");
 
-    write_uint8_t(fd, 2);
+    ret = write_uint8_t(fd, 2);
+    ASSURE_SIZE_WRITE("ZygiskdCompanion", "library_fd", ret, sizeof(uint8_t));
 
     exit(0);
   }
@@ -87,11 +85,13 @@ void entry(int fd) {
   if (module_entry == NULL) {
     LOGI("No companion module entry for module: %.*s\n", (int)ret, name);
 
-    write_uint8_t(fd, 0);
+    ret = write_uint8_t(fd, 0);
+    ASSURE_SIZE_WRITE("ZygiskdCompanion", "module_entry", ret, sizeof(uint8_t));
 
     exit(0);
   } else {
-    write_uint8_t(fd, 1);
+    ret = write_uint8_t(fd, 1);
+    ASSURE_SIZE_WRITE("ZygiskdCompanion", "module_entry", ret, sizeof(uint8_t));
   }
 
   while (1) {
@@ -102,19 +102,28 @@ void entry(int fd) {
 
       break;
     }
-
-    struct companion_module_thread_args *args = malloc(sizeof(struct companion_module_thread_args));
-    args->entry = module_entry;
   
-    if ((args->fd = read_fd(fd)) == -1) {
+    int fd = read_fd(fd);
+    if (fd == -1) {
       LOGE("Failed to receive client fd\n");
 
       exit(0);
     }
 
+    struct companion_module_thread_args *args = malloc(sizeof(struct companion_module_thread_args));
+    if (args == NULL) {
+      LOGE("Failed to allocate memory for thread args\n");
+
+      exit(0);
+    }
+
+    args->fd = fd;
+    args->entry = module_entry;
+
     LOGI("New companion request.\n - Module name: %.*s\n - Client fd: %d\n", (int)ret, name, args->fd);
 
-    write_uint8_t(args->fd, 1);
+    ret = write_uint8_t(args->fd, 1);
+    ASSURE_SIZE_WRITE("ZygiskdCompanion", "client_fd", ret, sizeof(uint8_t));
     
     pthread_t thread;
     pthread_create(&thread, NULL, entry_thread, args);

@@ -76,7 +76,7 @@ bool _apatch_get_package_config(struct packages_config *restrict config) {
     return false;
   }
 
-  char line[1048 * 2];
+  char line[1048];
   /* INFO: Skip the CSV header */
   if (fgets(line, sizeof(line), fp) == NULL) {
     LOGE("Failed to read APatch's package_config header: %s\n", strerror(errno));
@@ -166,7 +166,9 @@ bool apatch_uid_should_umount(uid_t uid) {
 bool apatch_uid_is_manager(uid_t uid) {
   struct stat s;
   if (stat("/data/user_de/0/me.bmax.apatch", &s) == -1) {
-    if (errno != ENOENT) LOGE("Failed to stat APatch manager data directory: %s\n", strerror(errno));
+    if (errno != ENOENT) {
+      LOGE("Failed to stat APatch manager data directory: %s\n", strerror(errno));
+    }
     errno = 0;
 
     return false;

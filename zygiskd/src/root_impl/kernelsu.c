@@ -53,7 +53,9 @@ bool ksu_uid_should_umount(uid_t uid) {
 bool ksu_uid_is_manager(uid_t uid) {
   struct stat s;
   if (stat("/data/user_de/0/me.weishu.kernelsu", &s) == -1) {
-    if (errno != ENOENT) LOGE("Failed to stat KSU manager data directory: %s\n", strerror(errno));
+    if (errno != ENOENT) {
+      LOGE("Failed to stat KSU manager data directory: %s\n", strerror(errno));
+    }
     errno = 0;
 
     return false;

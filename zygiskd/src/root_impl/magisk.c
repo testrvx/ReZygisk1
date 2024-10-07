@@ -80,8 +80,6 @@ enum RootImplState magisk_get_existence(void) {
     return Abnormal;
   }
 
-  LOGI("Magisk info: %s\n", magisk_info);
-
   for (unsigned long i = 0; i < sizeof(supported_variants) / sizeof(supported_variants[0]); i++) {
     if (strstr(magisk_info, supported_variants[i])) variant = (enum magisk_variants)(i + 1);
   }
@@ -96,15 +94,11 @@ enum RootImplState magisk_get_existence(void) {
     return Abnormal;
   }
 
-  LOGI("Magisk version: %s\n", magisk_version);
-
   if (atoi(magisk_version) >= MIN_MAGISK_VERSION) return Supported;
   else return TooOld;
 }
 
 bool magisk_uid_granted_root(uid_t uid) {
-  LOGI("Checking if UID %d is granted root access\n", uid);
-
   char sqlite_cmd[256];
   snprintf(sqlite_cmd, sizeof(sqlite_cmd), "select 1 from policies where uid=%d and policy=2 limit 1", uid);
 
@@ -122,8 +116,6 @@ bool magisk_uid_granted_root(uid_t uid) {
 }
 
 bool magisk_uid_should_umount(uid_t uid) {
-  LOGI("Checking if UID %d should unmount\n", uid);
-
   struct dirent *entry;
   DIR *proc = opendir("/proc");
   if (!proc) {
@@ -197,8 +189,6 @@ bool magisk_uid_should_umount(uid_t uid) {
 }
 
 bool magisk_uid_is_manager(uid_t uid) {
-  LOGI("Checking if UID %d is a Magisk manager\n", uid);
-
   char sqlite_cmd[256];
   snprintf(sqlite_cmd, sizeof(sqlite_cmd), "select value from strings where key=\"requester\" limit 1");
 
@@ -212,33 +202,19 @@ bool magisk_uid_is_manager(uid_t uid) {
     return false;
   }
 
-  if (output[0] == '\0') {
-    char stat_path[PATH_MAX];
+  char stat_path[PATH_MAX];
+  if (output[0] == '\0')
     snprintf(stat_path, sizeof(stat_path), "/data/user_de/0/%s", magisk_managers[(int)variant]);
+  else
+    snprintf(stat_path, sizeof(stat_path), "/data/user_de/0/%s", output + strlen("value="));
 
-    struct stat s;
-    if (stat(stat_path, &s) == -1) {
-      LOGE("Failed to stat %s: %s\n", stat_path, strerror(errno));
-      errno = 0;
+  struct stat s;
+  if (stat(stat_path, &s) == -1) {
+    LOGE("Failed to stat %s: %s\n", stat_path, strerror(errno));
+    errno = 0;
 
-      return false;
-    }
-
-    return s.st_uid == uid;
-  } else {
-    char stat_path[PATH_MAX];
-    snprintf(stat_path, sizeof(stat_path), "/data/user_de/0/%s", output + strlen("value=")); /* BUG: ISSUE HERE, OUTPUT IS NOT VALID */
-
-    LOGI("Checking |%s|\n", stat_path);
-
-    struct stat s;
-    if (stat(stat_path, &s) == -1) {
-      LOGE("Failed to stat %s WHAT %s\n", stat_path, strerror(errno));
-      errno = 0;
-
-      return false;
-    }
-
-    return s.st_uid == uid;
+    return false;
   }
+
+  return s.st_uid == uid;
 }
