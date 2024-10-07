@@ -346,6 +346,8 @@ struct SocketHandler : public EventHandler {
             PLOGE("failed to mount prop");
           }
 
+          LOGI("system server started");
+
           break;
         }
       }
@@ -560,6 +562,8 @@ struct SigChldHandler : public EventHandler {
 
             continue;
           }
+
+          LOGI("Initializing daemons");
 
           CHECK_DAEMON_EXIT(64)
           CHECK_DAEMON_EXIT(32)

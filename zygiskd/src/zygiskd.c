@@ -47,48 +47,6 @@ enum Architecture {
 #define ZYGISKD_FILE PATH_MODULES_DIR "/zygisksu/bin/zygiskd" lp_select("32", "64")
 #define ZYGISKD_PATH "/data/adb/modules/zygisksu/bin/zygiskd" lp_select("32", "64")
 
-#define ASSURE_SIZE_WRITE(area_name, subarea_name, sent_size, expected_size)                                    \
-  if (sent_size != (ssize_t)(expected_size)) {                                                                             \
-    LOGE("Failed to sent " subarea_name " in " area_name ": Expected %zu, got %zd\n", expected_size, sent_size); \
-                                                                                                                \
-    return;                                                                                                     \
-  }
-
-#define ASSURE_SIZE_READ(area_name, subarea_name, sent_size, expected_size)                                     \
-  if (sent_size != (ssize_t)(expected_size)) {                                                                             \
-    LOGE("Failed to read " subarea_name " in " area_name ": Expected %zu, got %zd\n", expected_size, sent_size); \
-                                                                                                                \
-    return;                                                                                                     \
-  }
-
-#define ASSURE_SIZE_WRITE_BREAK(area_name, subarea_name, sent_size, expected_size)                               \
-  if (sent_size != (ssize_t)(expected_size)) {                                                                              \
-    LOGE("Failed to sent " subarea_name " in " area_name ": Expected %zu, got %zd\n", expected_size, sent_size); \
-                                                                                                                 \
-    break;                                                                                                       \
-  }
-
-#define ASSURE_SIZE_READ_BREAK(area_name, subarea_name, sent_size, expected_size)                                \
-  if (sent_size != (ssize_t)(expected_size)) {                                                                              \
-    LOGE("Failed to read " subarea_name " in " area_name ": Expected %zu, got %zd\n", expected_size, sent_size); \
-                                                                                                                 \
-    break;                                                                                                       \
-  }
-
-#define ASSURE_SIZE_WRITE_WR(area_name, subarea_name, sent_size, expected_size)                                 \
-  if (sent_size != (ssize_t)(expected_size)) {                                                                             \
-    LOGE("Failed to sent " subarea_name " in " area_name ": Expected %zu, got %zd\n", expected_size, sent_size); \
-                                                                                                                \
-    return -1;                                                                                                  \
-  }
-
-#define ASSURE_SIZE_READ_WR(area_name, subarea_name, sent_size, expected_size)                                  \
-  if (sent_size != (ssize_t)(expected_size)) {                                                                             \
-    LOGE("Failed to read " subarea_name " in " area_name ": Expected %zu, got %zd\n", expected_size, sent_size); \
-                                                                                                                \
-    return -1;                                                                                                  \
-  }
-
 static enum Architecture get_arch(void) {
   char system_arch[32];
   get_property("ro.product.cpu.abi", system_arch);
@@ -785,7 +743,7 @@ void zygiskd_start(char *restrict argv[]) {
       }
       case GetModuleDir: {
         size_t index = 0;
-        read_size_t(client_fd, &index);
+        ssize_t ret = read_size_t(client_fd, &index);
         ASSURE_SIZE_READ_BREAK("GetModuleDir", "index", ret, sizeof(index));
 
         char module_dir[PATH_MAX];

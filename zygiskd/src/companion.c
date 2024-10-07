@@ -103,7 +103,7 @@ void entry(int fd) {
       break;
     }
   
-    int fd = read_fd(fd);
+    int client_fd = read_fd(fd);
     if (fd == -1) {
       LOGE("Failed to receive client fd\n");
 
@@ -117,7 +117,7 @@ void entry(int fd) {
       exit(0);
     }
 
-    args->fd = fd;
+    args->fd = client_fd;
     args->entry = module_entry;
 
     LOGI("New companion request.\n - Module name: %.*s\n - Client fd: %d\n", (int)ret, name, args->fd);
