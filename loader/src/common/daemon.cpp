@@ -49,8 +49,6 @@ namespace zygiskd {
   }
 
   bool PingHeartbeat() {
-    LOGI("DAEMON-- PingHeartbeat");
-
     int fd = Connect(5);
     if (fd == -1) {
       PLOGE("Connect to zygiskd");
@@ -60,16 +58,12 @@ namespace zygiskd {
 
     socket_utils::write_u8(fd, (uint8_t) SocketAction::PingHeartBeat);
 
-    LOGI("DAEMON++ PingHeartbeat");
-
     close(fd);
 
     return true;
   }
 
   int RequestLogcatFd() {
-    LOGI("DAEMON-- RequestLogcatFd");
-
     int fd = Connect(1);
     if (fd == -1) {
       PLOGE("RequestLogcatFd");
@@ -79,14 +73,10 @@ namespace zygiskd {
 
     socket_utils::write_u8(fd, (uint8_t) SocketAction::RequestLogcatFd);
 
-    LOGI("DAEMON++ RequestLogcatFd");
-
     return fd;
   }
 
   uint32_t GetProcessFlags(uid_t uid) {
-    LOGI("DAEMON-- GetProcessFlags");
-
     int fd = Connect(1);
     if (fd == -1) {
       PLOGE("GetProcessFlags");
@@ -99,16 +89,12 @@ namespace zygiskd {
 
     uint32_t res = socket_utils::read_u32(fd);
 
-    LOGI("DAEMON++ GetProcessFlags");
-
     close(fd);
 
     return res;
   }
 
   std::vector<Module> ReadModules() {
-    LOGI("DAEMON-- ReadModules");
-
     std::vector<Module> modules;
     int fd = Connect(1);
     if (fd == -1) {
@@ -125,16 +111,12 @@ namespace zygiskd {
       modules.emplace_back(name, module_fd);
     }
 
-    LOGI("DAEMON++ ReadModules");
-
     close(fd);
 
     return modules;
   }
 
   int ConnectCompanion(size_t index) {
-    LOGI("DAEMON-- ConnectCompanion");
-
     int fd = Connect(1);
     if (fd == -1) {
       PLOGE("ConnectCompanion");
@@ -147,21 +129,16 @@ namespace zygiskd {
 
     uint8_t res = socket_utils::read_u8(fd);
 
-    if (res == 1) {
-      LOGI("DAEMON++ ConnectCompanion (OK)");
-
-      return fd;
-    } else {
-      PLOGE("DAEMON++ ConnectCompanion (FAIL: %d)", res);
-
+    if (res == 1) return fd;
+    else {
       close(fd);
+
       return -1;
     }
   }
 
   int GetModuleDir(size_t index) {
-    LOGI("DAEMON-- GetModuleDir");
-    UniqueFd fd = Connect(1);
+    int fd = Connect(1);
     if (fd == -1) {
       PLOGE("GetModuleDir");
 
@@ -172,15 +149,12 @@ namespace zygiskd {
     socket_utils::write_usize(fd, index);
     int nfd = socket_utils::recv_fd(fd);
 
-    LOGI("DAEMON++ GetModuleDir: %d", nfd);
-
     close(fd);
 
     return nfd;
   }
 
   void ZygoteRestart() {
-    LOGI("DAEMON-- ZygoteRestart");
     int fd = Connect(1);
     if (fd == -1) {
       if (errno == ENOENT) LOGD("Could not notify ZygoteRestart (maybe it hasn't been created)");
@@ -192,22 +166,16 @@ namespace zygiskd {
     if (!socket_utils::write_u8(fd, (uint8_t) SocketAction::ZygoteRestart))
       PLOGE("Failed to request ZygoteRestart");
 
-    LOGI("DAEMON++ ZygoteRestart");
-
     close(fd);
   }
 
   void SystemServerStarted() {
-    LOGI("DAEMON-- SystemServerStarted");
-
     int fd = Connect(1);
     if (fd == -1) PLOGE("Failed to report system server started");
     else {
       if (!socket_utils::write_u8(fd, (uint8_t) SocketAction::SystemServerStarted))
         PLOGE("Failed to report system server started");
     }
-
-    LOGI("DAEMON++ SystemServerStarted");
 
     close(fd);
   }
